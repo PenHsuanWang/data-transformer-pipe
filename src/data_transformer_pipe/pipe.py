@@ -27,7 +27,9 @@ class JoinOperator(Operator):
 
     def execute(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         if self.left not in env or self.right not in env:
-            raise KeyError(f"[JoinOperator] missing table: {self.left} or {self.right}")
+            raise KeyError(
+                "[JoinOperator] missing table: " f"{self.left} or {self.right}"
+            )
         df_l = env[self.left]
         df_r = env[self.right]
         result = df_l.merge(df_r, how=self.how, on=self.on)
@@ -84,10 +86,16 @@ class ProcessPipe:
         )
         return self
 
-    def union(self, left: str, right: str, output: str | None = None) -> "ProcessPipe":
+    def union(
+        self,
+        left: str,
+        right: str,
+        output: str | None = None,
+    ) -> "ProcessPipe":
         if output is None:
             output = f"{left}_union_{right}"
-        self.operators.append(UnionOperator(output=output, left=left, right=right))
+        op = UnionOperator(output=output, left=left, right=right)
+        self.operators.append(op)
         return self
 
     def run(self) -> pd.DataFrame:
@@ -106,7 +114,8 @@ class ProcessPipe:
 
         for name, df in pipeline_plan.get("dataframes", {}).items():
             if not isinstance(df, pd.DataFrame):
-                raise TypeError(f"dataframes['{name}'] is not a pandas DataFrame")
+                msg = f"dataframes['{name}'] is not a pandas DataFrame"
+                raise TypeError(msg)
             pipe.add_dataframe(name, df)
 
         for op in pipeline_plan.get("operations", []):
@@ -120,7 +129,11 @@ class ProcessPipe:
                     output=op.get("output"),
                 )
             elif op_type == "union":
-                pipe.union(left=op["left"], right=op["right"], output=op.get("output"))
+                pipe.union(
+                    left=op["left"],
+                    right=op["right"],
+                    output=op.get("output"),
+                )
             else:
                 raise ValueError(f"Unsupported operation type: {op_type}")
 

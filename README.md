@@ -67,6 +67,72 @@ pipe.describe("pipeline_diagram")  # Generates pipeline_diagram.png
 result = pipe.run()
 ```
 
+**Quick Start (CLI)**
+After installing the package, you can run a pipeline directly from the command line.
+
+1. Create input CSV files `df1.csv` and `df2.csv`:
+
+   ```csv
+   # df1.csv
+   id,name
+   1,A
+   2,B
+   ```
+
+   ```csv
+   # df2.csv
+   id,score
+   1,10
+   2,20
+   ```
+
+2. Write a `plan.json` describing the pipeline:
+
+   ```json
+   {
+     "dataframes": {"df1": "df1.csv", "df2": "df2.csv"},
+     "operations": [{"type": "join", "left": "df1", "right": "df2", "on": "id"}]
+   }
+   ```
+
+3. Execute the plan and save the result:
+
+   ```bash
+   data-transformer-pipe plan.json -o result.csv
+   ```
+
+   The resulting `result.csv` will contain the joined rows.
+
+**Additional Examples**
+
+You can build more complex plans or run them directly from Python.
+
+1. **Union Example**
+
+   ```python
+   import pandas as pd
+   from data_transformer_pipe import ProcessPipe
+
+   df1 = pd.DataFrame({"id": [1, 2], "value": [10, 20]})
+   df2 = pd.DataFrame({"id": [3], "value": [30]})
+
+   pipe = ProcessPipe().add_dataframe("a", df1).add_dataframe("b", df2)
+   pipe.union("a", "b", output="all")
+   result = pipe.run()
+   print(result._rows)
+   ```
+
+2. **Quick Analysis**
+
+   After a pipeline runs you have a normal pandas DataFrame. You can
+   perform any analysis you like, for example calculating averages:
+
+   ```python
+   values = [int(r["value"]) for r in result._rows]
+   avg_value = sum(values) / len(values)
+   print("Average:", avg_value)
+   ```
+
 **Community & Contributions**
 data-transformer-pipe is open-source under the MIT license. Contributions are welcome—whether to add new operators, improve documentation, or enhance core features. Visit the GitHub repository `data-transformer-pipe` to file issues, submit pull requests, or join discussions.
 

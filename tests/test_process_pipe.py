@@ -1,7 +1,6 @@
 import pandas as pd
-from pandas.testing import assert_frame_equal
-
 from data_transformer_pipe.pipe import ProcessPipe
+from pandas.testing import assert_frame_equal
 
 
 def test_join_and_union():
