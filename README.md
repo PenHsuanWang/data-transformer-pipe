@@ -69,3 +69,13 @@ result = pipe.run()
 
 **Community & Contributions**
 data-transformer-pipe is open-source under the MIT license. Contributions are welcome—whether to add new operators, improve documentation, or enhance core features. Visit the GitHub repository `data-transformer-pipe` to file issues, submit pull requests, or join discussions.
+
+## Development
+
+This project uses [tox](https://tox.wiki) to manage testing and linting. To run
+all checks locally, install `tox` and run:
+
+```bash
+pip install tox
+tox
+```
