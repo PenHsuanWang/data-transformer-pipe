@@ -77,6 +77,9 @@ class DataFrame:
     def __eq__(self, other: Any) -> bool:  # type: ignore[override]
         return isinstance(other, DataFrame) and self._rows == other._rows
 
+    def __repr__(self) -> str:
+        return f"DataFrame({self._rows})"
+
 
 def concat(dfs: Iterable[DataFrame], ignore_index: bool = False) -> DataFrame:
     rows: List[Dict[str, Any]] = []

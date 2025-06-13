@@ -67,6 +67,31 @@ pipe.describe("pipeline_diagram")  # Generates pipeline_diagram.png
 result = pipe.run()
 ```
 
+### Command-line Quick Start
+
+You can also execute a pipeline directly from a JSON file. Each DataFrame is
+described as a simple mapping of column names to lists:
+
+```json
+{
+  "dataframes": {
+    "df1": {"id": [1, 2], "name": ["A", "B"]},
+    "df2": {"id": [2, 3], "score": [80, 90]}
+  },
+  "operations": [
+    {"type": "join", "left": "df1", "right": "df2", "on": "id"}
+  ]
+}
+```
+
+Save this as `plan.json` and run:
+
+```bash
+data-transformer-pipe plan.json
+```
+
+The command prints the resulting DataFrame to the console.
+
 **Community & Contributions**
 data-transformer-pipe is open-source under the MIT license. Contributions are welcome—whether to add new operators, improve documentation, or enhance core features. Visit the GitHub repository `data-transformer-pipe` to file issues, submit pull requests, or join discussions.
 
