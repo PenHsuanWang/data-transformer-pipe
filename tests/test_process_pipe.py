@@ -19,7 +19,12 @@ def test_join_and_union():
                 "on": "id",
                 "output": "joined",
             },
-            {"type": "union", "left": "joined", "right": "df3", "output": "final"},
+            {
+                "type": "union",
+                "left": "joined",
+                "right": "df3",
+                "output": "final",
+            },
         ],
     }
 

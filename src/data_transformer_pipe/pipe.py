@@ -32,8 +32,8 @@ class JoinOperator(Operator):
         df_r = env[self.right]
         result = df_l.merge(df_r, how=self.how, on=self.on)
         print(
-            f"[JoinOperator] {self.left} {self.how} join {self.right} on {self.on} -> "
-            f"'{self.output}' shape={result.shape}"
+            f"[JoinOperator] {self.left} {self.how} join {self.right} "
+            f"on {self.on} -> '{self.output}' shape={result.shape}"
         )
         return result
 
