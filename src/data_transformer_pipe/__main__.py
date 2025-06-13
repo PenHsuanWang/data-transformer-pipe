@@ -32,7 +32,12 @@ def main(argv: list[str] | None = None) -> None:
         description="Execute a data-transformer-pipe pipeline"
     )
     parser.add_argument("plan", help="JSON file describing the pipeline")
-    parser.add_argument("--output", "-o", help="Output CSV file path", default=None)
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Output CSV file path",
+        default=None,
+    )
     args = parser.parse_args(argv)
 
     with open(args.plan) as f:

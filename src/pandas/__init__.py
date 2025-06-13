@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from types import ModuleType
 from typing import Any, Dict, Iterable, List, Sequence
+import sys
 
 NA = None
 
@@ -44,7 +45,10 @@ class DataFrame:
         return (len(self._rows), len(self._rows[0]))
 
     def merge(
-        self, right: "DataFrame", how: str = "left", on: str | List[str] | None = None
+        self,
+        right: "DataFrame",
+        how: str = "left",
+        on: str | List[str] | None = None,
     ) -> "DataFrame":
         if how != "left":
             raise NotImplementedError("Only left join supported in stub")
@@ -56,10 +60,10 @@ class DataFrame:
             key = tuple(r.get(c) for c in on_cols)
             right_index[key] = r
         rows = []
-        for l in self._rows:
-            key = tuple(l.get(c) for c in on_cols)
+        for left_row in self._rows:
+            key = tuple(left_row.get(c) for c in on_cols)
             r = right_index.get(key)
-            new_row = l.copy()
+            new_row = left_row.copy()
             if r:
                 for c, v in r.items():
                     if c not in on_cols:
@@ -87,12 +91,11 @@ def concat(dfs: Iterable[DataFrame], ignore_index: bool = False) -> DataFrame:
 
 def assert_frame_equal(left: DataFrame, right: DataFrame) -> None:
     if left != right:
-        raise AssertionError(f"DataFrames not equal:\n{left._rows!r}\n{right._rows!r}")
+        message = f"DataFrames not equal:\n{left._rows!r}\n{right._rows!r}"
+        raise AssertionError(message)
 
 
 testing = ModuleType("pandas.testing")
 testing.assert_frame_equal = assert_frame_equal
-
-import sys
 
 sys.modules[__name__ + ".testing"] = testing
