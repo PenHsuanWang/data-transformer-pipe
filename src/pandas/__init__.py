@@ -1,10 +1,11 @@
 """Minimal pandas stub for testing without external dependency."""
 
 from __future__ import annotations
+
+import sys
 from dataclasses import dataclass
 from types import ModuleType
 from typing import Any, Dict, Iterable, List, Sequence
-import sys
 
 NA = None
 
