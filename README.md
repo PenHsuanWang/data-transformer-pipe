@@ -67,6 +67,42 @@ pipe.describe("pipeline_diagram")  # Generates pipeline_diagram.png
 result = pipe.run()
 ```
 
+**Quick Start (CLI)**
+After installing the package, you can run a pipeline directly from the command line.
+
+1. Create input CSV files `df1.csv` and `df2.csv`:
+
+   ```csv
+   # df1.csv
+   id,name
+   1,A
+   2,B
+   ```
+
+   ```csv
+   # df2.csv
+   id,score
+   1,10
+   2,20
+   ```
+
+2. Write a `plan.json` describing the pipeline:
+
+   ```json
+   {
+     "dataframes": {"df1": "df1.csv", "df2": "df2.csv"},
+     "operations": [{"type": "join", "left": "df1", "right": "df2", "on": "id"}]
+   }
+   ```
+
+3. Execute the plan and save the result:
+
+   ```bash
+   data-transformer-pipe plan.json -o result.csv
+   ```
+
+   The resulting `result.csv` will contain the joined rows.
+
 **Community & Contributions**
 data-transformer-pipe is open-source under the MIT license. Contributions are welcome—whether to add new operators, improve documentation, or enhance core features. Visit the GitHub repository `data-transformer-pipe` to file issues, submit pull requests, or join discussions.
 
