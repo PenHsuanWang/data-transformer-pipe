@@ -36,4 +36,3 @@ def test_auto_output_names():
     expected = pd.DataFrame({"id": [1], "v": ["A"], "v2": ["B"]})
     assert_frame_equal(result, expected)
     assert "df1_left_join_df2" in pipe.env
-
