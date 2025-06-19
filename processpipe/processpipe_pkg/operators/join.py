@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Union, Dict
 import pandas as pd
 from .base import Operator
