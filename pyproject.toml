@@ -26,7 +26,7 @@ Homepage = "https://github.com/yourname/data-transformer-pipe"
 data-transformer-pipe = "data_transformer_pipe.__main__:main"
 
 [tool.setuptools.packages.find]
-where = ["src", "processpipe/src"]
+where = ["src", "processpipe"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
