@@ -76,11 +76,28 @@ class DataFrame:
             rows.append(new_row)
         return DataFrame.from_rows(rows)
 
+    def query(self, expr: str) -> "DataFrame":
+        rows: List[Dict[str, Any]] = []
+        for r in self._rows:
+            try:
+                keep = bool(eval(expr, {}, r))
+            except Exception:
+                keep = False
+            if keep:
+                rows.append(r.copy())
+        return DataFrame.from_rows(rows)
+
     def reset_index(self, drop: bool = False) -> "DataFrame":
         return self
 
     def __eq__(self, other: Any) -> bool:  # type: ignore[override]
         return isinstance(other, DataFrame) and self._rows == other._rows
+
+    def to_dict(self) -> Dict[str, List[Any]]:
+        return _dict_from_rows(self._rows)
+
+    def __repr__(self) -> str:
+        return f"DataFrame({_dict_from_rows(self._rows)})"
 
 
 def concat(dfs: Iterable[DataFrame], ignore_index: bool = False) -> DataFrame:
