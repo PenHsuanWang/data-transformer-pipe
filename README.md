@@ -129,9 +129,33 @@ You can build more complex plans or run them directly from Python.
 
    ```python
    values = [int(r["value"]) for r in result._rows]
-   avg_value = sum(values) / len(values)
-   print("Average:", avg_value)
-   ```
+ avg_value = sum(values) / len(values)
+  print("Average:", avg_value)
+  ```
+
+## Design & Architecture
+
+The repository is organized as two cooperating packages:
+
+* **`src/data_transformer_pipe`** – exposes a small operator framework and the
+  command line interface.  It provides a simple `ProcessPipe` class that can be
+  constructed from a plan dictionary and executed directly.
+* **`processpipe/processpipe_pkg`** – contains the more feature complete
+  pipeline engine used by the examples.  Its submodules are:
+  * `core` – the advanced `ProcessPipe` implementation, DAG management and
+    backend abstraction.
+  * `operators` – individual transformation classes like
+    `JoinOperator`, `UnionOperator`, `AggregationOperator`,
+    `GroupSizeOperator` and `FilterOperator`.
+  * `plans` – helper utilities for loading YAML/JSON pipeline descriptions.
+
+Every pipeline step is represented by an `Operator` subclass that implements
+`_execute_core`.  When a pipeline runs, the `ProcessPipe` builds a
+`networkx.DiGraph` to track dependencies and executes operators in topological
+order.  A pluggable `FrameBackend` (currently `InMemoryBackend` using pandas)
+handles DataFrame operations so that alternative implementations can be added
+later.  The examples in the `examples/` directory demonstrate how to compose
+these pieces.
 
 **Community & Contributions**
 data-transformer-pipe is open-source under the MIT license. Contributions are welcome—whether to add new operators, improve documentation, or enhance core features. Visit the GitHub repository `data-transformer-pipe` to file issues, submit pull requests, or join discussions.
