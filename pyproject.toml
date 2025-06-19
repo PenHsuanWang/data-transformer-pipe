@@ -9,10 +9,7 @@ description = "A declarative, pandas-based ETL library"
 authors = [
     { name="Your Name", email="you@example.com" }
 ]
-dependencies = [
-    "pandas>=2.1",
-    "networkx>=3.2",
-]
+dependencies = []
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
