@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from types import ModuleType
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Dict, Iterable, List, Sequence, cast
 
 NA = None
 
@@ -20,9 +20,20 @@ def _rows_from_dict(data: Dict[str, Sequence[Any]]) -> List[Dict[str, Any]]:
 
 
 def _dict_from_rows(rows: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
-    columns = set()
+    """Convert a row-oriented representation to a column-oriented dict.
+
+    The original implementation used a ``set`` for collecting column names
+    which resulted in an arbitrary column order. Tests rely on a stable
+    ordering that preserves the order of first appearance, so we accumulate
+    the column names in a list instead.
+    """
+
+    columns: List[str] = []
     for r in rows:
-        columns.update(r.keys())
+        for col in r.keys():
+            if col not in columns:
+                columns.append(col)
+
     return {c: [r.get(c) for r in rows] for c in columns}
 
 
@@ -37,7 +48,7 @@ class DataFrame:
     @classmethod
     def from_rows(cls, rows: List[Dict[str, Any]]) -> "DataFrame":
         data = _dict_from_rows(rows)
-        return cls(data)
+        return cls(cast(Dict[str, Sequence[Any]], data))
 
     @property
     def shape(self) -> tuple[int, int]:
@@ -63,10 +74,10 @@ class DataFrame:
         rows = []
         for left_row in self._rows:
             key = tuple(left_row.get(c) for c in on_cols)
-            r = right_index.get(key)
+            match = right_index.get(key)
             new_row = left_row.copy()
-            if r:
-                for c, v in r.items():
+            if match:
+                for c, v in match.items():
                     if c not in on_cols:
                         new_row[c] = v
             else:
@@ -114,6 +125,6 @@ def assert_frame_equal(left: DataFrame, right: DataFrame) -> None:
 
 
 testing = ModuleType("pandas.testing")
-testing.assert_frame_equal = assert_frame_equal
+testing.assert_frame_equal = assert_frame_equal  # type: ignore[attr-defined]
 
 sys.modules[__name__ + ".testing"] = testing

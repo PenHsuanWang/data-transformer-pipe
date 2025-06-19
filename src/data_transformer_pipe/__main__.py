@@ -1,7 +1,7 @@
 import argparse
 import csv
 import json
-from typing import Dict
+from typing import Any, Dict, Sequence, cast
 
 import pandas as pd
 
@@ -10,13 +10,13 @@ from .pipe import ProcessPipe
 
 def _load_csv(path: str) -> pd.DataFrame:
     """Load a CSV file into the minimal pandas DataFrame."""
-    data: Dict[str, list] = {}
+    data: Dict[str, list[Any]] = {}
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             for key, value in row.items():
                 data.setdefault(key, []).append(value)
-    return pd.DataFrame(data)
+    return pd.DataFrame(cast(Dict[str, Sequence[Any]], data))
 
 
 def _write_csv(df: pd.DataFrame, path: str) -> None:
