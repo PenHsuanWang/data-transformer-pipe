@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Union
 
 import pandas as pd
-import logging
-
 
 log = logging.getLogger("processpipe")
 
