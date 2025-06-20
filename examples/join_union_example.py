@@ -35,7 +35,8 @@ def main() -> None:
     print("Pipeline result:\n", result, "\n")
 
     # Simple analysis: average score, ignoring missing values
-    avg_score = result["score"].astype(float).mean()
+    scores = [float(v) for v in result["score"] if v is not None]
+    avg_score = sum(scores) / len(scores) if scores else None
     print("Average score:", avg_score)
 
 
