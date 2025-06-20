@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Union
 
 import pandas as pd
-import logging
-
 
 log = logging.getLogger("processpipe")
 
@@ -26,7 +25,9 @@ class Operator:
             if name not in env:
                 raise KeyError(f"{self.__class__.__name__}: missing '{name}'")
         result = self._execute_core(env)
-        log.info("%s -> '%s' shape=%s", self.__class__.__name__, self.output, result.shape)
+        log.info(
+            "%s -> '%s' shape=%s", self.__class__.__name__, self.output, result.shape
+        )
         return result
 
 
@@ -64,7 +65,9 @@ class UnionOperator(Operator):
 
 
 class FilterOperator(Operator):
-    def __init__(self, source: str, predicate: str, *, output: str | None = None) -> None:
+    def __init__(
+        self, source: str, predicate: str, *, output: str | None = None
+    ) -> None:
         super().__init__(output or f"{source}_filtered")
         self.source = source
         self.predicate = predicate
