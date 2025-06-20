@@ -96,6 +96,11 @@ class DataFrame:
                 rows.append(r.copy())
         return DataFrame(rows)
 
+    # ------------------------------------------------------------------
+    # Minimal groupby/agg implementation used by AggregationOperator
+    def groupby(self, by):
+        return _GroupBy(self, by)
+
     def reset_index(self, drop=False):
         return self.copy()
 
@@ -114,6 +119,44 @@ def concat(frames, *, ignore_index=True):
     for f in frames:
         rows.extend([row.copy() for row in f._rows])
     return DataFrame(rows)
+
+
+class _GroupBy:
+    """Very small subset of pandas GroupBy for tests."""
+
+    def __init__(self, df: DataFrame, by):
+        self._df = df
+        if isinstance(by, str):
+            self._by = [by]
+        else:
+            self._by = list(by)
+
+    def agg(self, agg_map):
+        groups = {}
+        for row in self._df._rows:
+            key = tuple(row.get(c) for c in self._by)
+            groups.setdefault(key, []).append(row)
+
+        out_rows = []
+        for key, rows in groups.items():
+            out = {c: v for c, v in zip(self._by, key)}
+            for col, func in agg_map.items():
+                vals = [r.get(col) for r in rows]
+                if func == "sum":
+                    val = sum(vals)
+                elif func in ("mean", "avg", "average"):
+                    val = sum(vals) / len(vals) if vals else NA
+                elif func == "min":
+                    val = min(vals)
+                elif func == "max":
+                    val = max(vals)
+                elif func == "count":
+                    val = len(rows)
+                else:
+                    raise ValueError(f"Unsupported aggregation '{func}'")
+                out[col] = val
+            out_rows.append(out)
+        return DataFrame(out_rows)
 
 # Submodule for testing
 from types import SimpleNamespace
