@@ -98,7 +98,13 @@ After installing the package, you can run a pipeline directly from the command l
 3. Execute the plan and save the result:
 
    ```bash
-   data-transformer-pipe plan.json -o result.csv
+   pp run plan.json -o result.csv
+   ```
+
+   You can inspect the execution order without running it:
+
+   ```bash
+   pp dag plan.json
    ```
 
    The resulting `result.csv` will contain the joined rows.
