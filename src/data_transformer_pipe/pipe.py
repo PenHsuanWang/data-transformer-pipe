@@ -63,6 +63,50 @@ class UnionOperator(Operator):
         return pd.concat([env[self.left], env[self.right]], ignore_index=True)
 
 
+class FilterOperator(Operator):
+    def __init__(self, source: str, predicate: str, *, output: str | None = None) -> None:
+        super().__init__(output or f"{source}_filtered")
+        self.source = source
+        self.predicate = predicate
+        self.inputs = [source]
+
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        return env[self.source].query(self.predicate)
+
+
+class AggregationOperator(Operator):
+    def __init__(
+        self,
+        source: str,
+        groupby: Union[str, List[str]],
+        agg_map: Dict[str, str],
+        *,
+        output: str | None = None,
+    ) -> None:
+        super().__init__(output or f"{source}_agg")
+        self.source = source
+        self.groupby = groupby
+        self.agg_map = agg_map
+        self.inputs = [source]
+
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        return env[self.source].groupby(self.groupby).agg(self.agg_map).reset_index()
+
+
+class GroupSizeOperator(Operator):
+    def __init__(self, source: str, groupby: str, *, output: str | None = None) -> None:
+        super().__init__(output or f"{source}_counts")
+        self.source = source
+        self.groupby = groupby
+        self.inputs = [source]
+
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        df = env[self.source].copy()
+        counts = df[self.groupby].value_counts()
+        df["group_size"] = df[self.groupby].map(counts)
+        return df
+
+
 class ProcessPipe:
     """Manage DataFrame environment and operator execution."""
 
@@ -94,6 +138,39 @@ class ProcessPipe:
         output: str | None = None,
     ) -> "ProcessPipe":
         op = UnionOperator(left=left, right=right, output=output)
+        self.operators.append(op)
+        return self
+
+    def filter(
+        self,
+        source: str,
+        predicate: str,
+        output: str | None = None,
+    ) -> "ProcessPipe":
+        op = FilterOperator(source, predicate, output=output)
+        self.operators.append(op)
+        return self
+
+    def aggregate(
+        self,
+        source: str,
+        groupby: Union[str, List[str]],
+        agg_map: Dict[str, str],
+        output: str | None = None,
+    ) -> "ProcessPipe":
+        op = AggregationOperator(
+            source=source, groupby=groupby, agg_map=agg_map, output=output
+        )
+        self.operators.append(op)
+        return self
+
+    def group_size(
+        self,
+        source: str,
+        groupby: str,
+        output: str | None = None,
+    ) -> "ProcessPipe":
+        op = GroupSizeOperator(source, groupby, output=output)
         self.operators.append(op)
         return self
 
@@ -133,10 +210,37 @@ class ProcessPipe:
                     right=op["right"],
                     output=op.get("output"),
                 )
+            elif op_type == "filter":
+                pipe.filter(
+                    source=op["source"],
+                    predicate=op["predicate"],
+                    output=op.get("output"),
+                )
+            elif op_type == "aggregate":
+                pipe.aggregate(
+                    source=op["source"],
+                    groupby=op["groupby"],
+                    agg_map=op["agg_map"],
+                    output=op.get("output"),
+                )
+            elif op_type == "group_size":
+                pipe.group_size(
+                    source=op["source"],
+                    groupby=op["groupby"],
+                    output=op.get("output"),
+                )
             else:
                 raise ValueError(f"Unsupported operation type: {op_type}")
 
         return pipe
 
 
-__all__ = ["ProcessPipe", "Operator", "JoinOperator", "UnionOperator"]
+__all__ = [
+    "ProcessPipe",
+    "Operator",
+    "JoinOperator",
+    "UnionOperator",
+    "FilterOperator",
+    "AggregationOperator",
+    "GroupSizeOperator",
+]
