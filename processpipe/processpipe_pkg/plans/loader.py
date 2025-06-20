@@ -18,7 +18,16 @@ def load_plan(path: str | Path) -> ProcessPipe:
         if file_path.suffix in {".yml", ".yaml"}:
             if yaml is None:
                 raise ImportError("PyYAML is required for YAML plans")
-            plan = yaml.safe_load(f)
+
+            class InlineLoader(yaml.SafeLoader):
+                pass
+
+            def _construct_inline(loader: yaml.Loader, node: Any) -> Any:
+                return loader.construct_mapping(node)
+
+            InlineLoader.add_constructor("tag:yaml.org,2002:inline", _construct_inline)
+
+            plan = yaml.load(f, Loader=InlineLoader)
         else:
             plan = json.load(f)
 
