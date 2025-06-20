@@ -107,8 +107,11 @@ class GroupSizeOperator(Operator):
 
     def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         df = env[self.source].copy()  # type: ignore[attr-defined]
-        counts = df[self.groupby].value_counts()
-        df["group_size"] = df[self.groupby].map(counts)
+        group_sizes = df.groupby(self.groupby).transform("size")
+        if isinstance(group_sizes, pd.DataFrame):
+            df["group_size"] = group_sizes.iloc[:, 0]
+        else:
+            df["group_size"] = group_sizes
         return df
 
 

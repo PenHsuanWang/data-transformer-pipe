@@ -45,6 +45,19 @@ class DataFrame:
         self._rows = _rows_from_dict(data)
         self.columns = list(data.keys())
 
+    def __getitem__(self, key: str):
+        return [row.get(key) for row in self._rows]
+
+    def __setitem__(self, key: str, values: Iterable[Any]) -> None:
+        values = list(values)
+        if len(values) != len(self._rows):
+            raise ValueError("Length mismatch")
+        for row, val in zip(self._rows, values):
+            row[key] = val
+
+    def copy(self) -> "DataFrame":
+        return DataFrame.from_rows([r.copy() for r in self._rows])
+
     @classmethod
     def from_rows(cls, rows: List[Dict[str, Any]]) -> "DataFrame":
         data = _dict_from_rows(rows)
@@ -157,6 +170,15 @@ class _GroupBy:
             out_rows.append(out)
         return DataFrame.from_rows(out_rows)
 
+    def transform(self, func: str):
+        if func != "size":
+            raise ValueError(f"Unsupported transform '{func}'")
+        counts: Dict[tuple, int] = {}
+        for r in self.df._rows:
+            key = tuple(r.get(c) for c in self.by)
+            counts[key] = counts.get(key, 0) + 1
+        return [counts[tuple(r.get(c) for c in self.by)] for r in self.df._rows]
+
 
 def assert_frame_equal(left: DataFrame, right: DataFrame) -> None:
     if left != right:
@@ -166,5 +188,8 @@ def assert_frame_equal(left: DataFrame, right: DataFrame) -> None:
 
 testing = ModuleType("pandas.testing")
 testing.assert_frame_equal = assert_frame_equal  # type: ignore[attr-defined]
+testing.assert_series_equal = lambda left, right: (
+    None if list(left) == list(right) else (_ for _ in ()).throw(AssertionError())
+)
 
 sys.modules[__name__ + ".testing"] = testing

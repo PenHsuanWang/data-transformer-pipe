@@ -1,5 +1,6 @@
 NA = None
 
+
 class DataFrame:
     def __init__(self, data):
         if isinstance(data, DataFrame):
@@ -114,6 +115,7 @@ class DataFrame:
     def __repr__(self):
         return f"DataFrame({self.to_dict()})"
 
+
 def concat(frames, *, ignore_index=True):
     rows = []
     for f in frames:
@@ -158,13 +160,31 @@ class _GroupBy:
             out_rows.append(out)
         return DataFrame(out_rows)
 
+    def transform(self, func):
+        if func != "size":
+            raise ValueError(f"Unsupported transform '{func}'")
+        counts = {}
+        for row in self._df._rows:
+            key = tuple(row.get(c) for c in self._by)
+            counts[key] = counts.get(key, 0) + 1
+        return [counts[tuple(row.get(c) for c in self._by)] for row in self._df._rows]
+
+
 # Submodule for testing
 from types import SimpleNamespace
+
 
 def _assert_frame_equal(left, right):
     assert left.columns == right.columns
     assert left.to_dict() == right.to_dict()
 
+
+def _assert_series_equal(left, right):
+    assert list(left) == list(right)
+
+
 # provide pandas.testing namespace
-testing = SimpleNamespace(assert_frame_equal=_assert_frame_equal)
+testing = SimpleNamespace(
+    assert_frame_equal=_assert_frame_equal, assert_series_equal=_assert_series_equal
+)
 __all__ = ["DataFrame", "concat", "NA", "testing"]
