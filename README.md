@@ -49,6 +49,14 @@ Install via pip:
 pip install data-transformer-pipe
 ```
 
+If you cloned the repository, install the package in editable mode:
+
+```bash
+git clone https://github.com/<your-org>/data-transformer-pipe.git
+cd data-transformer-pipe
+pip install -e .
+```
+
 See [docs/tutorial.md](docs/tutorial.md) for a step-by-step walkthrough.
 
 Then, in your script or notebook:
