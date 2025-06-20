@@ -98,6 +98,11 @@ class DataFrame:
                 rows.append(r.copy())
         return DataFrame.from_rows(rows)
 
+    # ------------------------------------------------------------------
+    # Minimal groupby/agg implementation
+    def groupby(self, by: str | List[str]):
+        return _GroupBy(self, by)
+
     def reset_index(self, drop: bool = False) -> "DataFrame":
         return self
 
@@ -116,6 +121,41 @@ def concat(dfs: Iterable[DataFrame], ignore_index: bool = False) -> DataFrame:
     for df in dfs:
         rows.extend(df._rows)
     return DataFrame.from_rows(rows)
+
+
+class _GroupBy:
+    """Very small subset of pandas GroupBy used in tests."""
+
+    def __init__(self, df: DataFrame, by: str | List[str]):
+        self.df = df
+        self.by = [by] if isinstance(by, str) else list(by)
+
+    def agg(self, agg_map: Dict[str, str]) -> DataFrame:
+        groups: Dict[tuple, List[Dict[str, Any]]] = {}
+        for r in self.df._rows:
+            key = tuple(r.get(c) for c in self.by)
+            groups.setdefault(key, []).append(r)
+
+        out_rows: List[Dict[str, Any]] = []
+        for key, rows in groups.items():
+            out = {c: v for c, v in zip(self.by, key)}
+            for col, func in agg_map.items():
+                vals = [r.get(col) for r in rows]
+                if func == "sum":
+                    val = sum(vals)
+                elif func in ("mean", "avg", "average"):
+                    val = sum(vals) / len(vals) if vals else NA
+                elif func == "min":
+                    val = min(vals)
+                elif func == "max":
+                    val = max(vals)
+                elif func == "count":
+                    val = len(rows)
+                else:
+                    raise ValueError(f"Unsupported aggregation '{func}'")
+                out[col] = val
+            out_rows.append(out)
+        return DataFrame.from_rows(out_rows)
 
 
 def assert_frame_equal(left: DataFrame, right: DataFrame) -> None:
