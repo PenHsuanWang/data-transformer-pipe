@@ -4,6 +4,7 @@ from .union import UnionOperator
 from .aggregation import AggregationOperator
 from .groupsize import GroupSizeOperator
 from .filter import FilterOperator
+from .synapse import SynapseNotebookOperator
 
 __all__ = [
     "Operator",
@@ -12,4 +13,5 @@ __all__ = [
     "AggregationOperator",
     "GroupSizeOperator",
     "FilterOperator",
+    "SynapseNotebookOperator",
 ]

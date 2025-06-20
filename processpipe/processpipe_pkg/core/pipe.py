@@ -70,6 +70,53 @@ class ProcessPipe:
     def filter(self, source: str, *, predicate, output=None) -> "ProcessPipe":
         return self._append(FilterOperator(source, predicate, output=output))
 
+    # ── plan helpers ─────────────────────────────────────────────
+    @classmethod
+    def build_pipe(cls, plan: Dict[str, any]) -> "ProcessPipe":
+        """Construct a ``ProcessPipe`` from a plan dictionary."""
+        pipe = cls()
+
+        for name, df in plan.get("dataframes", {}).items():
+            if not isinstance(df, pd.DataFrame):
+                raise TypeError(f"dataframes['{name}'] is not a pandas DataFrame")
+            pipe.add_dataframe(name, df)
+
+        for op in plan.get("operations", []):
+            op_type = op.get("type")
+            if op_type == "join":
+                pipe.join(
+                    op["left"],
+                    op["right"],
+                    on=op["on"],
+                    how=op.get("how", "left"),
+                    output=op.get("output"),
+                )
+            elif op_type == "union":
+                pipe.union(op["left"], op["right"], output=op.get("output"))
+            elif op_type == "aggregate":
+                pipe.aggregate(
+                    op["source"],
+                    groupby=op["groupby"],
+                    agg_map=op["agg_map"],
+                    output=op.get("output"),
+                )
+            elif op_type == "group_size":
+                pipe.group_size(
+                    op["source"],
+                    groupby=op["groupby"],
+                    output=op.get("output"),
+                )
+            elif op_type == "filter":
+                pipe.filter(
+                    op["source"],
+                    predicate=op["predicate"],
+                    output=op.get("output"),
+                )
+            else:
+                raise ValueError(f"Unsupported operation type: {op_type}")
+
+        return pipe
+
     # internal
     def _append(self, op: Operator) -> "ProcessPipe":
         self.ops.append(op)
