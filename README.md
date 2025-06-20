@@ -49,10 +49,12 @@ Install via pip:
 pip install data-transformer-pipe
 ```
 
+See [docs/tutorial.md](docs/tutorial.md) for a step-by-step walkthrough.
+
 Then, in your script or notebook:
 
 ```python
-from data_transformer_pipe import ProcessPipe
+from processpipe import ProcessPipe
 
 plan = {
   "dataframes": {"df1": df1, "df2": df2},
@@ -117,7 +119,7 @@ You can build more complex plans or run them directly from Python.
 
    ```python
    import pandas as pd
-   from data_transformer_pipe import ProcessPipe
+   from processpipe import ProcessPipe
 
    df1 = pd.DataFrame({"id": [1, 2], "value": [10, 20]})
    df2 = pd.DataFrame({"id": [3], "value": [30]})
