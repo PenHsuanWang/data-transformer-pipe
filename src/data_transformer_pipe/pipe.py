@@ -93,7 +93,9 @@ class AggregationOperator(Operator):
         self.inputs = [source]
 
     def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        return env[self.source].groupby(self.groupby).agg(self.agg_map).reset_index()  # type: ignore[attr-defined]
+        grouped = env[self.source].groupby(self.groupby)
+        result = grouped.agg(self.agg_map).reset_index()  # type: ignore[attr-defined]
+        return result
 
 
 class GroupSizeOperator(Operator):
