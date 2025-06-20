@@ -1,5 +1,5 @@
 import pandas as pd
-from data_transformer_pipe import ProcessPipe
+from processpipe import ProcessPipe
 
 
 def main() -> None:
