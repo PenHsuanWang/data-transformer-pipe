@@ -7,6 +7,7 @@ from .operators import (
     AggregationOperator,
     GroupSizeOperator,
     FilterOperator,
+    SynapseNotebookOperator,
 )
 
 __all__ = [
@@ -16,6 +17,7 @@ __all__ = [
     "AggregationOperator",
     "GroupSizeOperator",
     "FilterOperator",
+    "SynapseNotebookOperator",
     "load_plan",
     "sql_query",
 ]

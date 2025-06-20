@@ -2,62 +2,109 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 
 import pandas as pd
+import logging
 
 
-@dataclass
+log = logging.getLogger("processpipe")
+
+
 class Operator:
-    """Base class for all operations."""
+    """Abstract operation with uniform execution wrapper."""
 
-    output: str
+    def __init__(self, output: str) -> None:
+        self.output = output
+        self.inputs: List[str] = []
 
-    def execute(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         raise NotImplementedError
 
+    def execute(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        for name in self.inputs:
+            if name not in env:
+                raise KeyError(f"{self.__class__.__name__}: missing '{name}'")
+        result = self._execute_core(env)
+        log.info("%s -> '%s' shape=%s", self.__class__.__name__, self.output, result.shape)
+        return result
 
-@dataclass
+
 class JoinOperator(Operator):
-    left: str
-    right: str
-    on: Union[str, List[str]]
-    how: str = "left"
+    def __init__(
+        self,
+        left: str,
+        right: str,
+        on: Union[str, List[str]],
+        how: str = "left",
+        output: str | None = None,
+    ) -> None:
+        super().__init__(output or f"{left}_{how}_join_{right}")
+        self.left = left
+        self.right = right
+        self.on = on
+        self.how = how
+        self.inputs = [left, right]
 
-    def execute(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        if self.left not in env or self.right not in env:
-            raise KeyError(
-                "[JoinOperator] missing table: " f"{self.left} or {self.right}"
-            )
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         df_l = env[self.left]
         df_r = env[self.right]
-        result = df_l.merge(df_r, how=self.how, on=self.on)
-        print(
-            f"[JoinOperator] {self.left} {self.how} join {self.right} "
-            f"on {self.on} -> '{self.output}' shape={result.shape}"
-        )
-        return result
+        return df_l.merge(df_r, how=self.how, on=self.on)
 
 
-@dataclass
 class UnionOperator(Operator):
-    left: str
-    right: str
+    def __init__(self, left: str, right: str, *, output: str | None = None) -> None:
+        super().__init__(output or f"{left}_union_{right}")
+        self.left = left
+        self.right = right
+        self.inputs = [left, right]
 
-    def execute(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        if self.left not in env or self.right not in env:
-            raise KeyError(
-                f"[UnionOperator] missing table: {self.left} or {self.right}"
-            )
-        df_l = env[self.left]
-        df_r = env[self.right]
-        result = pd.concat([df_l, df_r], ignore_index=True)
-        print(
-            f"[UnionOperator] concat {self.left} + {self.right} -> "
-            f"'{self.output}' shape={result.shape}"
-        )
-        return result
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        return pd.concat([env[self.left], env[self.right]], ignore_index=True)
+
+
+class FilterOperator(Operator):
+    def __init__(self, source: str, predicate: str, *, output: str | None = None) -> None:
+        super().__init__(output or f"{source}_filtered")
+        self.source = source
+        self.predicate = predicate
+        self.inputs = [source]
+
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        return env[self.source].query(self.predicate)
+
+
+class AggregationOperator(Operator):
+    def __init__(
+        self,
+        source: str,
+        groupby: Union[str, List[str]],
+        agg_map: Dict[str, str],
+        *,
+        output: str | None = None,
+    ) -> None:
+        super().__init__(output or f"{source}_agg")
+        self.source = source
+        self.groupby = groupby
+        self.agg_map = agg_map
+        self.inputs = [source]
+
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        return env[self.source].groupby(self.groupby).agg(self.agg_map).reset_index()
+
+
+class GroupSizeOperator(Operator):
+    def __init__(self, source: str, groupby: str, *, output: str | None = None) -> None:
+        super().__init__(output or f"{source}_counts")
+        self.source = source
+        self.groupby = groupby
+        self.inputs = [source]
+
+    def _execute_core(self, env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        df = env[self.source].copy()
+        counts = df[self.groupby].value_counts()
+        df["group_size"] = df[self.groupby].map(counts)
+        return df
 
 
 class ProcessPipe:
@@ -79,10 +126,8 @@ class ProcessPipe:
         how: str = "left",
         output: str | None = None,
     ) -> "ProcessPipe":
-        if output is None:
-            output = f"{left}_{how}_join_{right}"
         self.operators.append(
-            JoinOperator(output=output, left=left, right=right, on=on, how=how)
+            JoinOperator(left=left, right=right, on=on, how=how, output=output)
         )
         return self
 
@@ -92,9 +137,40 @@ class ProcessPipe:
         right: str,
         output: str | None = None,
     ) -> "ProcessPipe":
-        if output is None:
-            output = f"{left}_union_{right}"
-        op = UnionOperator(output=output, left=left, right=right)
+        op = UnionOperator(left=left, right=right, output=output)
+        self.operators.append(op)
+        return self
+
+    def filter(
+        self,
+        source: str,
+        predicate: str,
+        output: str | None = None,
+    ) -> "ProcessPipe":
+        op = FilterOperator(source, predicate, output=output)
+        self.operators.append(op)
+        return self
+
+    def aggregate(
+        self,
+        source: str,
+        groupby: Union[str, List[str]],
+        agg_map: Dict[str, str],
+        output: str | None = None,
+    ) -> "ProcessPipe":
+        op = AggregationOperator(
+            source=source, groupby=groupby, agg_map=agg_map, output=output
+        )
+        self.operators.append(op)
+        return self
+
+    def group_size(
+        self,
+        source: str,
+        groupby: str,
+        output: str | None = None,
+    ) -> "ProcessPipe":
+        op = GroupSizeOperator(source, groupby, output=output)
         self.operators.append(op)
         return self
 
@@ -134,10 +210,37 @@ class ProcessPipe:
                     right=op["right"],
                     output=op.get("output"),
                 )
+            elif op_type == "filter":
+                pipe.filter(
+                    source=op["source"],
+                    predicate=op["predicate"],
+                    output=op.get("output"),
+                )
+            elif op_type == "aggregate":
+                pipe.aggregate(
+                    source=op["source"],
+                    groupby=op["groupby"],
+                    agg_map=op["agg_map"],
+                    output=op.get("output"),
+                )
+            elif op_type == "group_size":
+                pipe.group_size(
+                    source=op["source"],
+                    groupby=op["groupby"],
+                    output=op.get("output"),
+                )
             else:
                 raise ValueError(f"Unsupported operation type: {op_type}")
 
         return pipe
 
 
-__all__ = ["ProcessPipe", "Operator", "JoinOperator", "UnionOperator"]
+__all__ = [
+    "ProcessPipe",
+    "Operator",
+    "JoinOperator",
+    "UnionOperator",
+    "FilterOperator",
+    "AggregationOperator",
+    "GroupSizeOperator",
+]

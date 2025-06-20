@@ -24,6 +24,7 @@ Homepage = "https://github.com/yourname/data-transformer-pipe"
 
 [project.scripts]
 data-transformer-pipe = "data_transformer_pipe.__main__:main"
+pp = "processpipe.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src", "processpipe"]
