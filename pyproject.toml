@@ -28,22 +28,3 @@ data-transformer-pipe = "data_transformer_pipe.__main__:main"
 [tool.setuptools.packages.find]
 where = ["src", "processpipe"]
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q"
-
-[tool.black]
-line-length = 88
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
-
-[tool.isort]
-profile = "black"
-
-[tool.mypy]
-python_version = "3.10"
-check_untyped_defs = true
-disallow_incomplete_defs = true
-ignore_missing_imports = true
