@@ -1,0 +1,15 @@
+dataframes:
+  df1: !!inline {id: [1,2,3], name: [A,B,C]}
+  df2: !!inline {id: [2,3,4], score: [80,90,85]}
+
+operations:
+  - id: joined
+    type: join
+    left: df1
+    right: df2
+    on: id
+    how: left
+  - id: present
+    type: filter
+    source: joined
+    predicate: "score.notna()"
