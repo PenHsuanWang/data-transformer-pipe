@@ -8,7 +8,14 @@ from functools import wraps
 def command():
     """Decorator to mark a function as a command."""
     def decorator(func):
-        return func
+        @wraps(func)
+        def wrapper(*args):
+            if args and args[0] in {"--help", "-h"}:
+                echo(func.__doc__ or "")
+                return
+            return func(*args)
+
+        return wrapper
     return decorator
 
 
@@ -28,13 +35,20 @@ def group():
         def wrapper(args=None):
             if args is None:
                 args = sys.argv[1:]
-            if args:
-                cmd_name = args[0]
-                cmd = commands.get(cmd_name)
-                if cmd is None:
-                    raise SystemExit(1)
-                return cmd(*args[1:])
-            return func()
+            if not args or args[0] in {"-h", "--help"}:
+                echo("Usage: [COMMAND]")
+                echo("Commands:")
+                for name in commands:
+                    echo(f"  {name}")
+                return
+            cmd_name = args[0]
+            cmd = commands.get(cmd_name)
+            if cmd is None:
+                raise SystemExit(1)
+            if len(args) > 1 and args[1] in {"-h", "--help"}:
+                echo(cmd.__doc__ or "")
+                return
+            return cmd(*args[1:])
 
         def add_command(cmd, name=None):
             commands[name or cmd.__name__] = cmd

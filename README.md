@@ -71,6 +71,7 @@ result = pipe.run()
 
 **Quick Start (CLI)**
 After installing the package, you can run a pipeline directly from the command line.
+Run `pp --help` to see available subcommands.
 
 1. Create input CSV files `df1.csv` and `df2.csv`:
 
