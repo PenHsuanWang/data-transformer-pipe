@@ -58,7 +58,7 @@ class JoinOperator(Operator):
         left_df = _rename(left_df, "_left")
         right_df = _rename(right_df, "_right")
 
-        df = backend.merge(left_df, right_df, on=on_cols, how="left")
+        df = backend.merge(left_df, right_df, on=on_cols, how=self.how)
         if self.how == "inner":
             right_columns = [c for c in right_df.columns if c not in on_cols]
             if right_columns:
