@@ -65,9 +65,17 @@ class ProcessPipe:
         return self
 
     # ── fluent operator helpers ───────────────────────────────────
-    def join(self, left: str, right: str, *, on, how="left",
-             output=None) -> "ProcessPipe":
-        return self._append(JoinOperator(left, right, on, how, output))
+    def join(
+        self,
+        left: str,
+        right: str,
+        *,
+        on,
+        how="left",
+        conditions=None,
+        output=None,
+    ) -> "ProcessPipe":
+        return self._append(JoinOperator(left, right, on, how, conditions, output))
 
     def union(self, left: str, right: str, *, output=None) -> "ProcessPipe":
         return self._append(UnionOperator(left, right, output=output))
@@ -141,6 +149,7 @@ class ProcessPipe:
                     op["right"],
                     on=op["on"],
                     how=op.get("how", "left"),
+                    conditions=op.get("conditions"),
                     output=op.get("output"),
                 )
             elif op_type == "union":
