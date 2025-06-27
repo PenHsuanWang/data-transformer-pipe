@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import List, Union, Dict, Tuple
+from typing import Dict, List, Tuple, Union
+
 import pandas as pd
-from .base import Operator
+
 from ..core.backend import FrameBackend
+from .base import Operator
 
 
 class JoinOperator(Operator):
@@ -21,8 +23,9 @@ class JoinOperator(Operator):
         self.conditions = conditions or []
         self.inputs = [left, right]
 
-    def _execute_core(self, backend: FrameBackend,
-                      env: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    def _execute_core(
+        self, backend: FrameBackend, env: Dict[str, pd.DataFrame]
+    ) -> pd.DataFrame:
         left_df = env[self.left]
         right_df = env[self.right]
 
@@ -31,9 +34,7 @@ class JoinOperator(Operator):
         else:
             on_cols = list(self.on)
 
-        dup_cols = (
-            set(left_df.columns) & set(right_df.columns) - set(on_cols)
-        )
+        dup_cols = set(left_df.columns) & set(right_df.columns) - set(on_cols)
 
         def _rename(df, suffix):
             rows = []
@@ -65,8 +66,6 @@ class JoinOperator(Operator):
                 cond = " and ".join(f"{c} is not None" for c in right_columns)
                 df = backend.query(df, cond)
         if self.conditions:
-            expr_parts = [
-                f"{l}_left {op} {r}_right" for l, op, r in self.conditions
-            ]
+            expr_parts = [f"{l}_left {op} {r}_right" for l, op, r in self.conditions]
             df = backend.query(df, " and ".join(expr_parts))
         return df
