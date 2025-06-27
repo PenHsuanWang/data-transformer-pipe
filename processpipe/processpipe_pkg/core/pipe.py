@@ -15,6 +15,19 @@ from ..operators import (
     AggregationOperator,
     GroupSizeOperator,
     FilterOperator,
+    RollingAggOperator,
+    SortOperator,
+    TopNOperator,
+    FillNAOperator,
+    RenameOperator,
+    CastOperator,
+    StringOperator,
+    DropDuplicateOperator,
+    PartitionAggOperator,
+    RowNumberOperator,
+    DeleteOperator,
+    UpdateOperator,
+    CaseOperator,
     Operator,
 )
 from .backend import FrameBackend, InMemoryBackend
@@ -70,6 +83,45 @@ class ProcessPipe:
     def filter(self, source: str, *, predicate, output=None) -> "ProcessPipe":
         return self._append(FilterOperator(source, predicate, output=output))
 
+    def rolling_agg(self, source: str, *, on, window, agg, output=None) -> "ProcessPipe":
+        return self._append(RollingAggOperator(source, on, window, agg, output=output))
+
+    def sort(self, source: str, *, by, ascending=True, output=None) -> "ProcessPipe":
+        return self._append(SortOperator(source, by, ascending=ascending, output=output))
+
+    def top_n(self, source: str, *, n, metric, largest=True, per_group=False, group_keys=None, output=None) -> "ProcessPipe":
+        return self._append(TopNOperator(source, n, metric, largest=largest, per_group=per_group, group_keys=group_keys, output=output))
+
+    def fill_na(self, source: str, *, value, columns=None, output=None) -> "ProcessPipe":
+        return self._append(FillNAOperator(source, value, columns, output=output))
+
+    def rename(self, source: str, *, columns, output=None) -> "ProcessPipe":
+        return self._append(RenameOperator(source, columns, output=output))
+
+    def cast(self, source: str, *, casts, output=None) -> "ProcessPipe":
+        return self._append(CastOperator(source, casts, output=output))
+
+    def string_op(self, source: str, *, column, op, pattern, replacement=None, new_column=None, output=None) -> "ProcessPipe":
+        return self._append(StringOperator(source, column, op, pattern, replacement, output=output, new_column=new_column))
+
+    def drop_duplicates(self, source: str, *, subset=None, keep="first", output=None) -> "ProcessPipe":
+        return self._append(DropDuplicateOperator(source, subset, keep=keep, output=output))
+
+    def partition_agg(self, source: str, *, groupby, agg_map, output=None) -> "ProcessPipe":
+        return self._append(PartitionAggOperator(source, groupby, agg_map, output=output))
+
+    def row_number(self, source: str, *, partition_by=None, order_by=None, output=None) -> "ProcessPipe":
+        return self._append(RowNumberOperator(source, partition_by, order_by, output=output))
+
+    def delete(self, source: str, *, condition, output=None) -> "ProcessPipe":
+        return self._append(DeleteOperator(source, condition, output=output))
+
+    def update(self, source: str, *, condition, set_map, output=None) -> "ProcessPipe":
+        return self._append(UpdateOperator(source, condition, set_map, output=output))
+
+    def case(self, source: str, *, conditions, choices, default=None, output_col="case", output=None) -> "ProcessPipe":
+        return self._append(CaseOperator(source, conditions, choices, default, output_col, output=output))
+
     # ── plan helpers ─────────────────────────────────────────────
     @classmethod
     def build_pipe(cls, plan: Dict[str, any]) -> "ProcessPipe":
@@ -110,6 +162,103 @@ class ProcessPipe:
                 pipe.filter(
                     op["source"],
                     predicate=op["predicate"],
+                    output=op.get("output"),
+                )
+            elif op_type == "rolling_agg":
+                pipe.rolling_agg(
+                    op["source"],
+                    on=op["on"],
+                    window=op["window"],
+                    agg=op["agg"],
+                    output=op.get("output"),
+                )
+            elif op_type == "sort":
+                pipe.sort(
+                    op["source"],
+                    by=op["by"],
+                    ascending=op.get("ascending", True),
+                    output=op.get("output"),
+                )
+            elif op_type == "top_n":
+                pipe.top_n(
+                    op["source"],
+                    n=op["n"],
+                    metric=op["metric"],
+                    largest=op.get("largest", True),
+                    per_group=op.get("per_group", False),
+                    group_keys=op.get("group_keys"),
+                    output=op.get("output"),
+                )
+            elif op_type == "fill_na":
+                pipe.fill_na(
+                    op["source"],
+                    value=op["value"],
+                    columns=op.get("columns"),
+                    output=op.get("output"),
+                )
+            elif op_type == "rename":
+                pipe.rename(
+                    op["source"],
+                    columns=op["columns"],
+                    output=op.get("output"),
+                )
+            elif op_type == "cast":
+                pipe.cast(
+                    op["source"],
+                    casts=op["casts"],
+                    output=op.get("output"),
+                )
+            elif op_type == "string_op":
+                pipe.string_op(
+                    op["source"],
+                    column=op["column"],
+                    op=op["op"],
+                    pattern=op["pattern"],
+                    replacement=op.get("replacement"),
+                    new_column=op.get("new_column"),
+                    output=op.get("output"),
+                )
+            elif op_type == "drop_duplicates":
+                pipe.drop_duplicates(
+                    op["source"],
+                    subset=op.get("subset"),
+                    keep=op.get("keep", "first"),
+                    output=op.get("output"),
+                )
+            elif op_type == "partition_agg":
+                pipe.partition_agg(
+                    op["source"],
+                    groupby=op["groupby"],
+                    agg_map=op["agg_map"],
+                    output=op.get("output"),
+                )
+            elif op_type == "row_number":
+                pipe.row_number(
+                    op["source"],
+                    partition_by=op.get("partition_by"),
+                    order_by=op.get("order_by"),
+                    output=op.get("output"),
+                )
+            elif op_type == "delete":
+                pipe.delete(
+                    op["source"],
+                    condition=op["condition"],
+                    output=op.get("output"),
+                )
+            elif op_type == "update":
+                pipe.update(
+                    op["source"],
+                    condition=op["condition"],
+                    set_map=op["set"],
+                    output=op.get("output"),
+                )
+            elif op_type == "case":
+                pipe.case(
+                    op["source"],
+                    conditions=op["conditions"],
+                    choices=op["choices"],
+                    default=op.get("default"),
+                    output_col=op.get("output_col", "case"),
                     output=op.get("output"),
                 )
             else:
