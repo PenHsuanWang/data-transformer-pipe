@@ -1,12 +1,13 @@
 import pandas as pd
 from pandas.testing import assert_frame_equal
-
 from processpipe import ProcessPipe
 
 
 def test_join_with_conditions():
     left = pd.DataFrame({"id": [1, 2, 3], "val": ["A", "B", "C"]})
-    right = pd.DataFrame({"id": [1, 2, 4], "val": ["X", "B", "D"], "score": [10, 20, 30]})
+    right = pd.DataFrame(
+        {"id": [1, 2, 4], "val": ["X", "B", "D"], "score": [10, 20, 30]}
+    )
 
     pipe = (
         ProcessPipe()
@@ -15,9 +16,9 @@ def test_join_with_conditions():
         .join(
             "left",
             "right",
-            on="id",
+            on=[("id", "id"), ("val", "val")],
+            conditions=["eq", "neq"],
             how="inner",
-            conditions=[("val", "!=", "val")],
             output="joined",
         )
     )
@@ -34,4 +35,3 @@ def test_join_with_conditions():
     )
 
     assert_frame_equal(result, expected)
-

@@ -9,11 +9,20 @@ def test_load_plan_json():
             "df2": {"id": [2], "v2": [30]},
         },
         "operations": [
-            {"type": "join", "left": "df1", "right": "df2", "on": "id", "how": "left", "output": "j"},
+            {
+                "type": "join",
+                "left": "df1",
+                "right": "df2",
+                "on": [["id", "id"]],
+                "how": "left",
+                "output": "j",
+            },
             {"type": "filter", "source": "j", "predicate": "v2 > 25", "output": "f"},
         ],
     }
-    import json, tempfile
+    import json
+    import tempfile
+
     with tempfile.NamedTemporaryFile("w+", suffix=".json", delete=False) as f:
         json.dump(plan, f)
         f.flush()

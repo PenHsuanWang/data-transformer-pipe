@@ -28,10 +28,10 @@ Below is a reference design for the full 18 operators provided by **ProcessPipe*
 > | ---- | ---- | -------- | ----- |
 > | `left` | str | yes | input table name |
 > | `right` | str | yes | input table name |
-> | `on` | str or list[str] | yes | join key(s) |
+> | `on` | list[[left,right]] | yes* | explicit column pairs |
+> | `conditions` | list[str] | no | parallel comparison ops |
 > | `how` | str | no | default `'inner'` |
-> | `validate` | str | no | pass-through to `pandas.merge` |
-> | `compare_ops` | list[str] | no | custom predicate after cartesian merge |
+> | `suffixes` | tuple[str,str] | no | duplicate column resolver |
 > | `output` | str | no | defaults to `'join'` if omitted |
 >
 > **Validation & errors**
@@ -49,9 +49,9 @@ Below is a reference design for the full 18 operators provided by **ProcessPipe*
 >
 > **Example**
 > ```json
-> {"type": "join", "left": "orders", "right": "customers", "on": ["cust_id"], "how": "left", "validate": "m:1", "output": "orders_enriched"}
+> {"type": "join", "left": "orders", "right": "customers", "on": [["cust_id","cust_id"]], "conditions": ["eq"], "how": "left", "output": "orders_enriched"}
 > ```
-> DSL: `.join("orders", "customers", on="cust_id", how="left", validate="m:1")`
+> DSL: `.join("orders", "customers", on=[("cust_id","cust_id")], how="left")`
 >
 > **Unit tests**
 > * multi-key happy path

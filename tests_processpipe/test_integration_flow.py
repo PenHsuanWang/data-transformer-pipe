@@ -1,6 +1,5 @@
 import pandas as pd
 from pandas.testing import assert_frame_equal
-
 from processpipe import ProcessPipe
 
 
@@ -20,7 +19,12 @@ def test_full_operator_chain():
         .add_dataframe("customers", customers)
         .add_dataframe("orders", orders)
         .add_dataframe("extra", extra)
-        .join("orders", "customers", on="cust_id", output="orders_cust")
+        .join(
+            "orders",
+            "customers",
+            on=[("cust_id", "cust_id")],
+            output="orders_cust",
+        )
         .filter("orders_cust", predicate="amount > 100", output="big_orders")
         .group_size("big_orders", groupby="cust_id", output="big_orders_count")
         .aggregate(
