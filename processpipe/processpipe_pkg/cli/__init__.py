@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import click
 
-from ..plans.loader import load_plan
-from ..core.pipe import ProcessPipe
-from .run_cmd import run_cmd
+from ..core.pipe import ProcessPipe as ProcessPipe
+from ..plans.loader import load_plan as load_plan
 from .dag_cmd import dag_cmd
+from .run_cmd import run_cmd
 
 
 @click.group()

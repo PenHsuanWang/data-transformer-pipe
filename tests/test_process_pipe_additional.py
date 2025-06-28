@@ -21,7 +21,7 @@ def test_join_missing_dataframe():
     pipe = ProcessPipe()
     df1 = pd.DataFrame({"id": [1]})
     pipe.add_dataframe("df1", df1)
-    pipe.join("df1", "missing", on="id")
+    pipe.join("df1", "missing", on=[["id", "id"]])
     with pytest.raises(KeyError):
         pipe.run()
 
@@ -31,8 +31,8 @@ def test_auto_output_names():
     df1 = pd.DataFrame({"id": [1], "v": ["A"]})
     df2 = pd.DataFrame({"id": [1], "v2": ["B"]})
     pipe.add_dataframe("df1", df1).add_dataframe("df2", df2)
-    pipe.join("df1", "df2", on="id")
+    pipe.join("df1", "df2", on=[["id", "id"]])
     result = pipe.run()
     expected = pd.DataFrame({"id": [1], "v": ["A"], "v2": ["B"]})
     assert_frame_equal(result, expected)
-    assert "df1_left_join_df2" in pipe.env
+    assert "df1_inner_join_df2" in pipe.env

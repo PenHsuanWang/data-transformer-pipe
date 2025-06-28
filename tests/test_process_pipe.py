@@ -15,7 +15,8 @@ def test_join_and_union():
                 "type": "join",
                 "left": "df1",
                 "right": "df2",
-                "on": "id",
+                "on": [["id", "id"]],
+                "how": "left",
                 "output": "joined",
             },
             {

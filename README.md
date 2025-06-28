@@ -59,9 +59,15 @@ from processpipe import ProcessPipe
 plan = {
   "dataframes": {"df1": df1, "df2": df2},
   "operations": [
-    {"type": "join", "left": "df1", "right": "df2", "on": "id"},
-    {"type": "filter", "input": "_prev", "condition": "value > 0"}
-  ]
+    {
+      "type": "join",
+      "left": "df1",
+      "right": "df2",
+      "on": [["id", "id"]],
+      "conditions": ["eq"],
+    },
+    {"type": "filter", "input": "_prev", "condition": "value > 0"},
+  ],
 }
 
 pipe = ProcessPipe.build_pipe(plan)
@@ -94,7 +100,13 @@ Run `pp --help` to see available subcommands.
    ```json
    {
      "dataframes": {"df1": "df1.csv", "df2": "df2.csv"},
-     "operations": [{"type": "join", "left": "df1", "right": "df2", "on": "id"}]
+  "operations": [{
+    "type": "join",
+    "left": "df1",
+    "right": "df2",
+    "on": [["id", "id"]],
+    "conditions": ["eq"]
+  }]
    }
    ```
 
@@ -131,7 +143,33 @@ You can build more complex plans or run them directly from Python.
    print(result._rows)
    ```
 
-2. **Quick Analysis**
+2. **Join with Mixed Predicates**
+
+   ```python
+   import pandas as pd
+   from processpipe import ProcessPipe
+
+   orders = pd.DataFrame({"sku_id": [1, 2], "order_amt": [100, 70]})
+   prices = pd.DataFrame({"id": [1, 2], "floor": [50, 80]})
+
+   pipe = (
+       ProcessPipe()
+       .add_dataframe("orders", orders)
+       .add_dataframe("prices", prices)
+       .join(
+           "orders",
+           "prices",
+           on=[("sku_id", "id"), ("order_amt", "floor")],
+           conditions=["eq", "gt"],
+           how="inner",
+           output="orders_gt_floor",
+       )
+   )
+   result = pipe.run()
+   print(result)
+   ```
+
+3. **Quick Analysis**
 
    After a pipeline runs you have a normal pandas DataFrame. You can
    perform any analysis you like, for example calculating averages:

@@ -21,14 +21,25 @@ def test_complex_operator_chain():
         .add_dataframe("orders", orders)
         .add_dataframe("returns", returns)
         .add_dataframe("extra", extra)
-        .join("orders", "returns", on="order_id", how="left", output="orders_ret")
+        .join(
+            "orders",
+            "returns",
+            on=[("order_id", "order_id")],
+            how="left",
+            output="orders_ret",
+        )
         .fill_na(
             "orders_ret",
             value=False,
             columns=["return_flag"],
             output="orders_ret_filled",
         )
-        .join("orders_ret_filled", "customers", on="cust_id", output="orders_full")
+        .join(
+            "orders_ret_filled",
+            "customers",
+            on=[("cust_id", "cust_id")],
+            output="orders_full",
+        )
         .filter(
             "orders_full",
             predicate="amount > 50 and return_flag == False",

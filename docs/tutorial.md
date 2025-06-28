@@ -25,7 +25,7 @@ pipe = (
     ProcessPipe()
     .add_dataframe("people", people)
     .add_dataframe("scores", scores)
-    .join("people", "scores", on="id", how="left", output="joined")
+    .join("people", "scores", on=[("id", "id")], how="left", output="joined")
     .filter("joined", predicate="score.notna()", output="present")
 )
 
@@ -48,7 +48,7 @@ operations:
     type: join
     left: df1
     right: df2
-    on: id
+    on: [[id,id]]
     how: left
   - id: present
     type: filter

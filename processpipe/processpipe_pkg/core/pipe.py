@@ -1,42 +1,42 @@
 from __future__ import annotations
 
+import json
+import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
 
-import logging
-import json
-import pandas as pd
 import networkx as nx
+import pandas as pd
 
 from ..operators import (
-    JoinOperator,
-    UnionOperator,
     AggregationOperator,
-    GroupSizeOperator,
-    FilterOperator,
-    RollingAggOperator,
-    SortOperator,
-    TopNOperator,
-    FillNAOperator,
-    RenameOperator,
-    CastOperator,
-    StringOperator,
-    DropDuplicateOperator,
-    PartitionAggOperator,
-    RowNumberOperator,
-    DeleteOperator,
-    UpdateOperator,
     CaseOperator,
+    CastOperator,
+    DeleteOperator,
+    DropDuplicateOperator,
+    FillNAOperator,
+    FilterOperator,
+    GroupSizeOperator,
+    JoinOperator,
     Operator,
+    PartitionAggOperator,
+    RenameOperator,
+    RollingAggOperator,
+    RowNumberOperator,
+    SortOperator,
+    StringOperator,
+    TopNOperator,
+    UnionOperator,
+    UpdateOperator,
 )
 from .backend import FrameBackend, InMemoryBackend
 
-
 log = logging.getLogger("processpipe")
 if not log.handlers:
-    logging.basicConfig(format="%(levelname)s %(name)s: %(message)s",
-                        level=logging.INFO)
+    logging.basicConfig(
+        format="%(levelname)s %(name)s: %(message)s", level=logging.INFO
+    )
 
 
 class ProcessPipe:
@@ -71,19 +71,28 @@ class ProcessPipe:
         right: str,
         *,
         on,
-        how="left",
         conditions=None,
+        how="inner",
         output=None,
     ) -> "ProcessPipe":
-        return self._append(JoinOperator(left, right, on, how, conditions, output))
+        return self._append(
+            JoinOperator(
+                left,
+                right,
+                on,
+                how=how,
+                conditions=conditions,
+                output=output,
+            )
+        )
 
     def union(self, left: str, right: str, *, output=None) -> "ProcessPipe":
         return self._append(UnionOperator(left, right, output=output))
 
-    def aggregate(self, source: str, *, groupby, agg_map,
-                  output=None) -> "ProcessPipe":
-        return self._append(AggregationOperator(source, groupby, agg_map,
-                                                output=output))
+    def aggregate(self, source: str, *, groupby, agg_map, output=None) -> "ProcessPipe":
+        return self._append(
+            AggregationOperator(source, groupby, agg_map, output=output)
+        )
 
     def group_size(self, source: str, *, groupby, output=None) -> "ProcessPipe":
         return self._append(GroupSizeOperator(source, groupby, output=output))
@@ -91,16 +100,42 @@ class ProcessPipe:
     def filter(self, source: str, *, predicate, output=None) -> "ProcessPipe":
         return self._append(FilterOperator(source, predicate, output=output))
 
-    def rolling_agg(self, source: str, *, on, window, agg, output=None) -> "ProcessPipe":
+    def rolling_agg(
+        self, source: str, *, on, window, agg, output=None
+    ) -> "ProcessPipe":
         return self._append(RollingAggOperator(source, on, window, agg, output=output))
 
     def sort(self, source: str, *, by, ascending=True, output=None) -> "ProcessPipe":
-        return self._append(SortOperator(source, by, ascending=ascending, output=output))
+        return self._append(
+            SortOperator(source, by, ascending=ascending, output=output)
+        )
 
-    def top_n(self, source: str, *, n, metric, largest=True, per_group=False, group_keys=None, output=None) -> "ProcessPipe":
-        return self._append(TopNOperator(source, n, metric, largest=largest, per_group=per_group, group_keys=group_keys, output=output))
+    def top_n(
+        self,
+        source: str,
+        *,
+        n,
+        metric,
+        largest=True,
+        per_group=False,
+        group_keys=None,
+        output=None,
+    ) -> "ProcessPipe":
+        return self._append(
+            TopNOperator(
+                source,
+                n,
+                metric,
+                largest=largest,
+                per_group=per_group,
+                group_keys=group_keys,
+                output=output,
+            )
+        )
 
-    def fill_na(self, source: str, *, value, columns=None, output=None) -> "ProcessPipe":
+    def fill_na(
+        self, source: str, *, value, columns=None, output=None
+    ) -> "ProcessPipe":
         return self._append(FillNAOperator(source, value, columns, output=output))
 
     def rename(self, source: str, *, columns, output=None) -> "ProcessPipe":
@@ -109,17 +144,49 @@ class ProcessPipe:
     def cast(self, source: str, *, casts, output=None) -> "ProcessPipe":
         return self._append(CastOperator(source, casts, output=output))
 
-    def string_op(self, source: str, *, column, op, pattern, replacement=None, new_column=None, output=None) -> "ProcessPipe":
-        return self._append(StringOperator(source, column, op, pattern, replacement, output=output, new_column=new_column))
+    def string_op(
+        self,
+        source: str,
+        *,
+        column,
+        op,
+        pattern,
+        replacement=None,
+        new_column=None,
+        output=None,
+    ) -> "ProcessPipe":
+        return self._append(
+            StringOperator(
+                source,
+                column,
+                op,
+                pattern,
+                replacement,
+                output=output,
+                new_column=new_column,
+            )
+        )
 
-    def drop_duplicates(self, source: str, *, subset=None, keep="first", output=None) -> "ProcessPipe":
-        return self._append(DropDuplicateOperator(source, subset, keep=keep, output=output))
+    def drop_duplicates(
+        self, source: str, *, subset=None, keep="first", output=None
+    ) -> "ProcessPipe":
+        return self._append(
+            DropDuplicateOperator(source, subset, keep=keep, output=output)
+        )
 
-    def partition_agg(self, source: str, *, groupby, agg_map, output=None) -> "ProcessPipe":
-        return self._append(PartitionAggOperator(source, groupby, agg_map, output=output))
+    def partition_agg(
+        self, source: str, *, groupby, agg_map, output=None
+    ) -> "ProcessPipe":
+        return self._append(
+            PartitionAggOperator(source, groupby, agg_map, output=output)
+        )
 
-    def row_number(self, source: str, *, partition_by=None, order_by=None, output=None) -> "ProcessPipe":
-        return self._append(RowNumberOperator(source, partition_by, order_by, output=output))
+    def row_number(
+        self, source: str, *, partition_by=None, order_by=None, output=None
+    ) -> "ProcessPipe":
+        return self._append(
+            RowNumberOperator(source, partition_by, order_by, output=output)
+        )
 
     def delete(self, source: str, *, condition, output=None) -> "ProcessPipe":
         return self._append(DeleteOperator(source, condition, output=output))
@@ -127,8 +194,21 @@ class ProcessPipe:
     def update(self, source: str, *, condition, set_map, output=None) -> "ProcessPipe":
         return self._append(UpdateOperator(source, condition, set_map, output=output))
 
-    def case(self, source: str, *, conditions, choices, default=None, output_col="case", output=None) -> "ProcessPipe":
-        return self._append(CaseOperator(source, conditions, choices, default, output_col, output=output))
+    def case(
+        self,
+        source: str,
+        *,
+        conditions,
+        choices,
+        default=None,
+        output_col="case",
+        output=None,
+    ) -> "ProcessPipe":
+        return self._append(
+            CaseOperator(
+                source, conditions, choices, default, output_col, output=output
+            )
+        )
 
     # ── plan helpers ─────────────────────────────────────────────
     @classmethod
@@ -308,7 +388,9 @@ class ProcessPipe:
             ops = level_ops[lvl]
             if self.max_workers > 1 and len(ops) > 1:
                 with ThreadPoolExecutor(max_workers=self.max_workers) as ex:
-                    futures = {ex.submit(op.execute, self.backend, self.env): op for op in ops}
+                    futures = {
+                        ex.submit(op.execute, self.backend, self.env): op for op in ops
+                    }
                     for fut, op in futures.items():
                         res = fut.result()
                         self.env[op.output] = res
@@ -319,7 +401,11 @@ class ProcessPipe:
 
         if self.max_workers > 1 or not isinstance(self.backend, InMemoryBackend):
             lineage = [
-                {"operator": op.__class__.__name__, "output": op.output, "inputs": op.inputs}
+                {
+                    "operator": op.__class__.__name__,
+                    "output": op.output,
+                    "inputs": op.inputs,
+                }
                 for op in self.ops
             ]
             with open("pipeline_run.json", "w") as f:

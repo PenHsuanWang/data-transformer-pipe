@@ -3,7 +3,6 @@ import subprocess
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from processpipe.cli import main
 
 
@@ -14,7 +13,13 @@ def _create_plan(tmp_path: Path) -> Path:
             "df2": {"id": [1], "v2": ["B"]},
         },
         "operations": [
-            {"type": "join", "left": "df1", "right": "df2", "on": "id", "output": "j"}
+            {
+                "type": "join",
+                "left": "df1",
+                "right": "df2",
+                "on": [["id", "id"]],
+                "output": "j",
+            }
         ],
     }
     path = tmp_path / "plan.json"
@@ -40,12 +45,16 @@ def test_cli_dag(tmp_path):
 
 def test_python_module_entrypoint(tmp_path):
     plan_path = _create_plan(tmp_path)
-    res = subprocess.run([
-        "python",
-        "-m",
-        "processpipe",
-        "run",
-        str(plan_path),
-    ], capture_output=True, text=True)
+    res = subprocess.run(
+        [
+            "python",
+            "-m",
+            "processpipe",
+            "run",
+            str(plan_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
     assert res.returncode == 0
     assert "DataFrame" in res.stdout
