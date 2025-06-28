@@ -71,7 +71,7 @@ class ProcessPipe:
         right: str,
         *,
         on,
-        how="left",
+        how="inner",
         conditions=None,
         output=None,
     ) -> "ProcessPipe":
@@ -148,7 +148,7 @@ class ProcessPipe:
                     op["left"],
                     op["right"],
                     on=op["on"],
-                    how=op.get("how", "left"),
+                    how=op.get("how", "inner"),
                     conditions=op.get("conditions"),
                     output=op.get("output"),
                 )

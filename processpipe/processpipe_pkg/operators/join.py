@@ -31,8 +31,11 @@ class JoinOperator(Operator):
         else:
             on_cols = list(self.on)
 
+        cartesian = self.how == "cross" or not on_cols
+        rename_keys = [] if cartesian else on_cols
+
         dup_cols = (
-            set(left_df.columns) & set(right_df.columns) - set(on_cols)
+            set(left_df.columns) & set(right_df.columns) - set(rename_keys)
         )
 
         def _rename(df, suffix):
@@ -40,7 +43,7 @@ class JoinOperator(Operator):
             for row in df._rows:
                 new_row = {}
                 for k, v in row.items():
-                    if k in on_cols:
+                    if k in rename_keys:
                         new_row[k] = v
                     elif k in dup_cols:
                         new_row[f"{k}{suffix}"] = v
@@ -58,12 +61,18 @@ class JoinOperator(Operator):
         left_df = _rename(left_df, "_left")
         right_df = _rename(right_df, "_right")
 
-        df = backend.merge(left_df, right_df, on=on_cols, how="left")
-        if self.how == "inner":
-            right_columns = [c for c in right_df.columns if c not in on_cols]
-            if right_columns:
-                cond = " and ".join(f"{c} is not None" for c in right_columns)
-                df = backend.query(df, cond)
+        if cartesian:
+            left_df["__pp_key"] = [1] * len(left_df._rows)
+            right_df["__pp_key"] = [1] * len(right_df._rows)
+            df = backend.merge(left_df, right_df, on=["__pp_key"], how="inner")
+            # drop helper column
+            if hasattr(df, "drop"):
+                df = df.drop(columns=["__pp_key"])
+            else:
+                for r in df._rows:
+                    r.pop("__pp_key", None)
+        else:
+            df = backend.merge(left_df, right_df, on=on_cols, how=self.how)
         if self.conditions:
             expr_parts = [
                 f"{l}_left {op} {r}_right" for l, op, r in self.conditions
